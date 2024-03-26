@@ -1,41 +1,31 @@
 const express = require('express');
 const router = express.Router();
+const User = require('../Interface/user')
 
-// 用户数据，实际应用中应该从数据库中获取
-const users = [
-  { id: 1, name: 'Alice', email: 'alice@example.com' },
-  { id: 2, name: 'Bob', email: 'bob@example.com' }
-];
-
-router.get('/', (req, res) => {
-  res.json(users);
-});
-
-// 获取所有用户的接口
-router.get('/users', (req, res) => {
-  res.json(users);
-});
-
-// 获取单个用户的接口
-router.get('/users/:id', (req, res) => {
-  const user = users.find(u => u.id === parseInt(req.params.id));
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).send('用户未找到');
-  }
-});
-
-// 创建新用户的接口
-router.post('/users', (req, res) => {
-  // 在实际应用中，您需要验证和处理输入数据
-  const newUser = {
-    id: users.length + 1,
-    name: req.body.name,
-    email: req.body.email
-  };
-  users.push(newUser);
-  res.status(201).send(newUser);
-});
+/**
+ * 注册的请求对象
+ * @typedef {object} Register
+ * @property {string} username.required - 用户名称
+ * @property {string} password.required - 用户密码
+ */
+/**
+ * POST /api/user/register
+ * @summary 用户的注册接口
+ * @tags user
+ * @param {Register} request.body - 用户信息 - application/json
+ * @return {object} 200 - 注册成功 - application/json
+ * @return 409 - 用户名已存在
+ * @return 500 - 错误的查询
+ * @example response - 200 - 注册成功示例 - application/json
+ * {
+ *     "id": "XXXXXXXXX",
+ *     "username": "XXXXXXXXXX",
+ *     "status": "200",
+ *     "message": "用户注册成功"
+ * }
+ */
+router.post('/api/user/register',(req,res)=>{
+  User.userRegisterPost(req,res)
+})
 
 module.exports = router;

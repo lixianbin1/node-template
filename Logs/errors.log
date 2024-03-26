@@ -1,0 +1,22 @@
+[2024-03-26T17:22:13.197] [ERROR] user - ReferenceError: id is not defined
+    at exports.userRegisterPost (D:\Project\node-template\Interface\user.js:34:30)
+    at D:\Project\node-template\Routes\index.js:24:8
+    at Layer.handle [as handle_request] (D:\Project\node-template\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\Project\node-template\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\Project\node-template\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\Project\node-template\node_modules\express\lib\router\layer.js:95:5)
+    at D:\Project\node-template\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (D:\Project\node-template\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\Project\node-template\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (D:\Project\node-template\node_modules\express\lib\router\index.js:175:3)
+[2024-03-26T17:22:35.679] [ERROR] user - ReferenceError: id is not defined
+    at exports.userRegisterPost (D:\Project\node-template\Interface\user.js:34:30)
+    at D:\Project\node-template\Routes\index.js:24:8
+    at Layer.handle [as handle_request] (D:\Project\node-template\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\Project\node-template\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\Project\node-template\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\Project\node-template\node_modules\express\lib\router\layer.js:95:5)
+    at D:\Project\node-template\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (D:\Project\node-template\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\Project\node-template\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (D:\Project\node-template\node_modules\express\lib\router\index.js:175:3)

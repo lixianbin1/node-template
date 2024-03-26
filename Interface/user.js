@@ -1,44 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const { openDb } = require('../common/openDb');
+const myPool = require('../common/database.js');
+const log4js = require('log4js');
+const { v4: uuidv4 } = require('uuid')
+const logger = log4js.getLogger('user');
 
-// 新数据库文件的路径
-// const dbPath = '../database.db';
-
-// 创建一个新的数据库实例，如果数据库文件不存在，它将被创建
-// const db = new sqlite3.Database(dbPath, (err) => {
-//   if (err) {
-//     console.error(err.message);
-//   } else {
-//     console.log('已连接到数据库:', dbPath);
-//   }
-// });
-
-// // 关闭数据库连接
-// db.close((err) => {
-//   if (err) {
-//     console.error(err.message);
-//   }
-// });
-
-router.get('/login',async (req,res)=>{
-  const db = await openDb();
-  const { email, password } = req.body;
-  // 在实际应用中，您应该对密码进行加密处理
-  db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, user) => {
-    if (err) {
-      res.status(500).send('数据库查询出错');
-      return;
+exports.userRegisterPost = async(req,res)=>{
+  logger.info('请求/register接口')
+  try{
+    const { username, password } = req.body;
+    if(username && password){
+      const db = await myPool.acquire()
+      db.get('SELECT id FROM users WHERE username = ?',[username],async(err,row)=>{
+        if(err){
+          logger.error(err)
+          res.status(500).send({status:"500",message:'数据库查询出错'});
+        }else if(row){
+          res.status(409).send({status:"409",message:'用户名已存在'})
+        }else{
+          const id = uuidv4()
+          const stmt = db.prepare('INSERT INTO users (id, username, password) VALUES (?, ?, ?)');
+          stmt.run(id, username, password, (err) => {
+            if (err) {
+              logger.error(err)
+              res.status(500).send({status:"500",message:'创建用户失败'});
+            } else {
+              res.status(200).send({ id, username,status:"200",message: '用户注册成功' });
+            }
+          })
+        }
+      })
+    }else{
+      res.status(400).send({ status:"400",message: '参数校验失败' });
     }
-    if (user) {
-      // 登录成功，返回用户信息（不要返回密码）
-      delete user.password;
-      res.json(user);
-    } else {
-      // 登录失败，返回错误信息
-      res.status(401).send('邮箱或密码不正确');
-    }
-  });
-})
-
-module.exports = router;
+  }catch(err){
+    logger.error(err)
+    console.error('Error:', err);
+    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+  }
+}

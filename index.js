@@ -1,35 +1,45 @@
 const express=require('express')
 const Routes=require('./Routes')  //路由文件
-const User = require('./Interface/user')
 const bodyParser = require('body-parser')
-const dashboard = require('express-sqlite3-dashboard');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swaggerConfig')
-
+const swaggerConfig = require('./swaggerConfig')
 
 const log4js = require('log4js'); //日志配置
 log4js.configure({
-  appenders: { cheese: { type: 'file', filename: 'cheese.log' } },
-  categories: { default: { appenders: ['cheese'], level: 'trace' } }
+  appenders: {
+    errorFile: { type: 'file', filename: './Logs/errors.log' },
+    debugFile: { type: 'file', filename: './Logs/debugs.log' },
+    infoFile: { type: 'file', filename: './Logs/info.log' },
+    error: { type: 'logLevelFilter', level: 'error', appender: 'errorFile' },
+    debug: { type: 'logLevelFilter', level: 'debug', appender: 'debugFile', maxLevel: 'debug' },
+    info: { type: 'logLevelFilter', level: 'info', appender: 'infoFile', maxLevel: 'info' }
+  },
+  categories: {
+    default: { appenders: ['info', 'debug', 'error'], level: 'trace' }
+  }
 });
 const logger = log4js.getLogger();
 
+// 检测SQLite数据库
+const sqlite3 = require('sqlite3').verbose();
+let db = new sqlite3.Database('./SQLite.db', (err) => {
+  if (err) {
+    logger.error(err.message)
+  } else {
+    logger.info('已连接到SQLite数据库');
+  }
+});
+db.close();
+
 const app = express(); //express配置
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({extended: false}));
-  app.use('/dashboard', dashboard({
-    connection: {
-      filename: dbPath
-    },
-    root: '/dashboard',
-    table: 'your_table_name', // 指定要管理的表名
-    // 其他可选配置...
-  }));
-  app.use('/',Routes) //挂载路由
-  app.use('/user',User)
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); //挂载Swagge文档
+
+//自动生成Swagger配置
+const expressJSDocSwagger = require('express-jsdoc-swagger');
+expressJSDocSwagger(app)(swaggerConfig);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+app.use('/',Routes) //挂载路由
 
 const server=app.listen(8888,()=>{
   console.log('服务器启动,正在监听8888端口');
-  logger.trace('服务器启动,正在监听8888端口');
+  logger.info('服务器启动,正在监听8888端口');
 })
