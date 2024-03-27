@@ -53,55 +53,25 @@ const downloadFileToFolder=(win,url, fileName)=>{
 // 创建窗口函数
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1366,
-    height: 768,
-    minWidth:1000,
+    width: 500,
+    height: 700,
+    minWidth:300,
     minHeight:600,
-    resizable: true,
-    show:false,
+    // frame: false,
+    // titleBarStyle: 'hidden',
+    resizable: false,
     backgroundColor: '#fff',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
   })
 
-  win.webContents.openDevTools({mode:'right'})
+  win.webContents.openDevTools({mode:'detach'})
   win.loadFile('index.html')
   win.once('ready-to-show', () => {
     win.show()
   })
 
-
-
-  // // 下载功能
-  // win.webContents.session.on('will-download', (event, item, webContents) => {
-
-  //   // 获取安装目录（也就是文件安装目录中exe文件的目录）
-  //   let homeDir =  path.dirname(app.getPath('exe'))
-  //   // // 无需对话框提示， 直接将文件保存到路径
-  //   // item.setSavePath(homeDir)
-
-  
-  //   item.on('updated', (event, state) => {
-  //     // item.setSavePath(homeDir + '/' + )
-  //     if (state === 'interrupted') {
-  //       console.log('下载已中断,但阔以继续')
-  //     } else if (state === 'progressing') {
-  //       if (item.isPaused()) {
-  //         console.log('下載已暫停')
-  //       } else {
-  //         console.log(`已接收位元組: ${item.getReceivedBytes()}`)
-  //       }
-  //     }
-  //   })
-  //   item.once('done', (event, state) => {
-  //     if (state === 'completed') {
-  //       console.log('下載成功')
-  //     } else {
-  //       console.log(`下載失敗: ${state}`)
-  //     }
-  //   })
-  // })
   return win
 }
 

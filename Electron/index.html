@@ -4,17 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title></title>
+    <link rel="stylesheet" href="./resource/layui/css/layui.css">
     <link href="./common/style/index.css" rel="stylesheet">
     <script src="./common/jquery-3.7.1.min.js"></script>
   </head>
   <body >
     <!-- 开始界面 -->
-    <div id="start">
-      <h1>2</h1>
-      <button class="menu-button" onclick="startGame()">1</button>
-      <button class="menu-button" onclick="continueGame()">2</button>
-      <button class="menu-button" onclick="exitGame()">3</button>
+    <div id="login">
+      <h1>node-template</h1>
+      <form class="layui-form" action="">
+        <div class="layui-form-item">
+          <div class="layui-input-wrap">
+            <div class="layui-input-prefix">
+              <i class="layui-icon layui-icon-username"></i>
+            </div>
+            <input type="text" name="username" lay-verify="required" placeholder="请输入账号" autocomplete="off" lay-affix="clear" class="layui-input">
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <div class="layui-input-wrap">
+            <div class="layui-input-prefix">
+              <i class="layui-icon layui-icon-password"></i>
+            </div>
+            <input type="text" name="username" lay-verify="required" placeholder="请输入密码" autocomplete="off" lay-affix="clear" class="layui-input">
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <button class="layui-btn layui-btn-fluid" click="loginTo" lay-submit lay-filter="demo-login">登录</button>
+        </div>
+      </form>
     </div>
+    <script src="./resource/layui/layui.js"></script>
     <script src="./index.js"></script>
   </body>
 </html>

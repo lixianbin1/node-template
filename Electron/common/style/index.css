@@ -1,7 +1,6 @@
 *{margin:0;border:0;}
 canvas { width: 100%; height: 100%;vertical-align:bottom}
-/*start*/
-#start{
+#login{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,21 +12,23 @@ canvas { width: 100%; height: 100%;vertical-align:bottom}
     position: fixed;
     background: #fff;
 }
-#start .menu-button {
-    display: block;
-    width: 200px;
-    padding: 10px;
-    margin: 10px auto;
-    font-size: 20px;
-    color: white;
-    background-color: #333;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+#login .layui-input{
+    width: 360px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
 }
-#start .menu-button:hover {
-    background-color: #777;
+#login .layui-input-block,#login .layui-form-item{
+    margin-left:0;
+    margin-bottom:20px
 }
-#start h1{
-    margin-top:0;
+
+#login .layui-input,#login .layui-input-affix,#login .layui-input-wrap{
+    height: 48px;
+    line-height: 48px;
+}
+
+#login h1{
+    font-size: 40px;
+    height: 50px;
+    margin-bottom: 80px;
 }

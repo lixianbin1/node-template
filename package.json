@@ -6,7 +6,7 @@
   "author": "李贤斌 <xianbin.me@qq.com>",
   "license": "MIT",
   "scripts": {
-    "serve": "nodemon index.js"
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
