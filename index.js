@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express=require('express')
 const Routes=require('./Routes')  //路由文件
 const bodyParser = require('body-parser')
@@ -39,7 +40,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use('/',Routes) //挂载路由
 
+const c  = require('child_process')
 const server=app.listen(8888,()=>{
   console.log('服务器启动,正在监听8888端口');
   logger.info('服务器启动,正在监听8888端口');
+  // c.exec('start http://localhost:8888/docs')
 })
