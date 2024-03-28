@@ -1,0 +1,29 @@
+:root {
+    --main-menu-width: 60px;
+    --main-side-width: 200px;
+    --bg-color: #fff;
+    --nav-color: #000;
+}
+*{margin:0;border:0;}
+html,body{
+    height:100%;
+}
+#HomePage .header{
+    height: 60px;
+    background: #fff;
+    border: 1px solid #ededed;
+    box-sizing: border-box;
+}
+#HomePage .body{
+    height: calc(100% - 60px);
+    display: flex;
+    flex-direction: column;
+    background: #eee;
+}
+#HomePage .body .infoBox{
+    flex:5;
+}
+#HomePage .body .inputBox{
+    flex:2;
+    margin: 0 10px 10px;
+}

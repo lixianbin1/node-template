@@ -1,5 +1,4 @@
 *{margin:0;border:0;}
-canvas { width: 100%; height: 100%;vertical-align:bottom}
 #login{
     display: flex;
     justify-content: center;
@@ -13,7 +12,7 @@ canvas { width: 100%; height: 100%;vertical-align:bottom}
     background: #fff;
 }
 #login .layui-input{
-    width: 360px;
+    width: 300px;
     border: 1px solid #ccc;
     border-radius: 10px;
 }

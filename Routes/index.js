@@ -26,7 +26,7 @@ const {authenticateToken} = require('../common/authenticate')
  * }
  */
 router.post('/api/user/create',authenticateToken,(req,res)=>{
-  User.userRegisterPost(req,res)
+  User.userCreatePost(req,res)
 })
 
 /**
@@ -52,6 +52,10 @@ router.post('/api/user/create',authenticateToken,(req,res)=>{
  */
 router.post('/api/user/login',(req,res)=>{
   User.userloginPost(req,res)
+})
+
+router.get('/api/user/info',authenticateToken,(req,res)=>{
+  User.userInfoGet(req,res)
 })
 
 module.exports = router;

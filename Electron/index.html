@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./resource/layui/css/layui.css">
     <link href="./common/style/index.css" rel="stylesheet">
     <script src="./common/jquery-3.7.1.min.js"></script>
+    <script src="./common/fetch.js"></script>
   </head>
   <body >
     <!-- 开始界面 -->
@@ -18,7 +19,7 @@
             <div class="layui-input-prefix">
               <i class="layui-icon layui-icon-username"></i>
             </div>
-            <input type="text" name="username" lay-verify="required" placeholder="请输入账号" autocomplete="off" lay-affix="clear" class="layui-input">
+            <input type="text" name="Email" lay-verify="required" placeholder="请输入账号" value="xianbin@qq.com" autocomplete="off" lay-affix="clear" class="layui-input">
           </div>
         </div>
         <div class="layui-form-item">
@@ -26,11 +27,11 @@
             <div class="layui-input-prefix">
               <i class="layui-icon layui-icon-password"></i>
             </div>
-            <input type="text" name="username" lay-verify="required" placeholder="请输入密码" autocomplete="off" lay-affix="clear" class="layui-input">
+            <input type="password" name="Password" lay-verify="required" placeholder="请输入密码" value="123456" autocomplete="off" lay-affix="clear" class="layui-input">
           </div>
         </div>
         <div class="layui-form-item">
-          <button class="layui-btn layui-btn-fluid" click="loginTo" lay-submit lay-filter="demo-login">登录</button>
+          <button class="layui-btn layui-btn-fluid" click="loginTo" lay-submit lay-filter="login">登录</button>
         </div>
       </form>
     </div>
