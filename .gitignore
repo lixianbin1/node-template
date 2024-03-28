@@ -13,3 +13,4 @@ public/
 node_modules/
 .deploy*/
 out/
+Logs/
