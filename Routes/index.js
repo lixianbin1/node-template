@@ -58,4 +58,8 @@ router.get('/api/user/info',authenticateToken,(req,res)=>{
   User.userInfoGet(req,res)
 })
 
+router.get('/api/user/list',authenticateToken,(req,res)=>{
+  User.userListGet(req,res)
+})
+
 module.exports = router;

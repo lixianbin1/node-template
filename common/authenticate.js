@@ -10,7 +10,8 @@ exports.authenticateToken=(req, res, next)=>{
     } 
     jwt.verify(token, SECRET_KEY, (err, user) => {
         if (err){ // token无效或已过期
-            console.log(err)
+            console.log('authenticate.js' + err)
+            logger.error('authenticate.js' + err)
             return res.status(403).send({status:"403",message:'token无效或已过期'})
         }
         req.user = user;

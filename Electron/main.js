@@ -3,11 +3,24 @@ const path = require('path') // 路径模块
 const Store = require('electron-store');
 const store = new Store();
 /* 存储文件路径 */
-console.log(store.path);
+
+app.setPath('userData', path.join(app.getPath('appData'), 'your-app-name'));
+
+
+console.log('file path:'+store.path);
+
+console.log(app.getPath('appData'))
+
+
 
 // 定义ipcRenderer监听事件
 ipcMain.on('setStore', (_, key, value) => {
-  store.set(key, value)
+  try {  
+    store.set(key, value);  
+    console.log(`Stored value for key: ${key}`);  
+  } catch (error) {  
+    console.error('Error storing value:', error);  
+  }  
 })
 ipcMain.on('getStore', (_, key) => {
   let value = store.get(key)
@@ -35,21 +48,6 @@ const Ealert = (title="Title",text="Undefined",back=null)=>{
     title: NOTIFICATION_TITLE,
     body: NOTIFICATION_BODY
   }).show()
-}
-//下载函数
-const downloadFileToFolder=(win,url, fileName)=>{
-  win.webContents.downloadURL(url);
-  win.webContents.session.once('will-download', (event, item, webContents) => {
-    //设置保存路径
-    const filePath = path.join(app.getAppPath(), '/download', `${fileName}`);
-    console.log(filePath)
-    item.setSavePath(filePath);
-    item.once('done', (event, state) => {
-      if (state === 'completed') {
-        Ealert('通知',"下载成功！")
-      }
-    })
-  })
 }
 
 // 登录窗口
@@ -100,23 +98,14 @@ function closeCurrentWindow() {
   if (window) window.close();
 }
 
-
-
-
 // 只有在app模块的ready事件被激发后才能创建浏览器窗口
 app.whenReady().then(() => {
-  let win = loginWindow()
-
-  // 监听
-  ipcMain.on('downFile', (_, url,fileName) => {
-    console.log('creating',_, url,fileName)
-    //下载
-    downloadFileToFolder(win,url,fileName)
-  });
-  
-
+  loginWindow()
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) loginWindow()
+    console.log(2)
+    if (BrowserWindow.getAllWindows().length === 0){
+      loginWindow()
+    }
   })
 })
 
