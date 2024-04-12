@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../Interface/user')
+const Message = require('../Interface/message')
 const {authenticateToken} = require('../common/authenticate')
 
 /**
@@ -60,6 +61,14 @@ router.get('/api/user/info',authenticateToken,(req,res)=>{
 
 router.get('/api/user/list',authenticateToken,(req,res)=>{
   User.userListGet(req,res)
+})
+
+router.post('/api/message/create',authenticateToken,(req,res)=>{
+  Message.messageCreatePost(req,res)
+})
+
+router.get('/api/message/list',authenticateToken,(req,res)=>{
+  Message.messageListGet(req,res)
 })
 
 module.exports = router;
