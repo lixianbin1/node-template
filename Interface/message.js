@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid')
 const logger = log4js.getLogger('user');
+const WSdev = require('../common/webSocket');
 
 //发送消息
 exports.messageCreatePost = async(req,res)=>{
@@ -26,7 +27,9 @@ exports.messageCreatePost = async(req,res)=>{
           logger.error('userCreatePost Error:' + err)
           res.status(500).send({status:"500",message:'发送消息失败'}); 
         } else {
+          let obj = {MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp}
           res.status(200).send({ data:{MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp},status:"200",Times,message: '发送消息成功' });
+          WSdev.sendMessageToUser(ToUserID, Content);
         }
       })
     }finally{

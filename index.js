@@ -40,9 +40,17 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use('/',Routes) //挂载路由
 
+const PORT = process.env.PORT || 8888;
+const WSPORT = process.env.WSPORT || 8889;
+
+// 启动 WebSocket 服务
+const WSdev = require('./common/webSocket');
+WSdev.start();
+ 
+// 启动 Express 服务 
 const c  = require('child_process')
-const server=app.listen(8888,()=>{
-  console.log('服务器启动,正在监听8888端口');
-  logger.info('/index.js 服务器启动,正在监听8888端口');
+const server=app.listen(PORT,()=>{
+  console.log('  Express 服务启动,正在监听'+ PORT +'端口');
+  logger.info('/index.js Express服务启动,正在监听'+ PORT +'端口');
   // c.exec('start http://localhost:8888/docs')
 })
