@@ -11,13 +11,14 @@ const logger = log4js.getLogger('user');
 exports.userCreatePost = async(req,res)=>{
   logger.info('请求api/user/create接口')
   try{
-    const { Username,Password,Email } = req.body;
+    let { UserName,Password,Email } = req.body;
     if(!Email){
       return res.status(400).send({ status:"400",message: '未填写邮箱' });
     }
     if(!Password){
-      return res.status(400).send({ status:"400",message: '未填写密码' });
+      Password = process.env.DEFAULT_PASSWORD;
     }
+    const Timestamp = new Date().toLocaleString('zh-CN')
     const db = await myPool.acquire()
     try{
       db.get('SELECT Email FROM users WHERE Email = ?',[Email],async(err,row)=>{
@@ -29,13 +30,14 @@ exports.userCreatePost = async(req,res)=>{
         }else{
           const UserID = uuidv4()
           const enPassword = await bcrypt.hash(Password, 12);
-          const stmt = db.prepare('INSERT INTO users (UserID, Username, Password, Email) VALUES (?, ?, ? ,?)');
-          stmt.run(UserID, Username, enPassword, Email , (err) => {
+          const stmt = db.prepare('INSERT INTO users (UserID, UserName, Password, Email,CreateTime) VALUES (?, ?, ? ,?,?)');
+          stmt.run(UserID, UserName, enPassword, Email ,Timestamp, (err) => {
             if (err) {
               logger.error('userCreatePost Error:' + err)
+              logger.error(req.body)
               res.status(500).send({status:"500",message:'创建账号失败'}); 
             } else {
-              res.status(200).send({ UserID, Username,status:"200",message: '账号创建成功' });
+              res.status(200).send({ UserID, UserName,status:"200",message: '账号创建成功' });
             }
           })
         }
@@ -56,7 +58,6 @@ exports.userloginPost = async(req,res)=>{
     const SECRET_KEY = process.env.SECRET_KEY;
     const Expiration = process.env.Expiration
     const { Email, Password } = req.body;
-    
     if(!Email || !Password){
       return res.status(403).send({status:"403",message:'邮箱或密码错误'});
     }

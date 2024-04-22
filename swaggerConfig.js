@@ -9,9 +9,18 @@ const options = {
   },
   security: {
     BasicAuth: {
-      type: 'http',
-      scheme: 'basic',
+      type: 'apiKey',  
+      in: 'header',  
+      name: 'Authorization'
     },
+  },
+  swaggerUiOptions: {
+    requestInterceptor: function(request) {  
+      if (token) {  
+        request.headers['Authorization'] = 'Bearer ' + token;  
+      }  
+      return request;  
+    },  
   },
   baseDir: __dirname,
   filesPattern: './**/*.js',
