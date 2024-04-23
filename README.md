@@ -1,6 +1,6 @@
 # node-template
 
-一个node项目,用于企业内部通讯的服务。配套有Electron客户端。模块有：消息模块，联系人模块，系统模块等
+一个node项目,用于企业内部通讯的服务。配套有[Electron客户端项目](https://github.com/lixianbin1/Electron-Example/tree/ebook)。模块有：消息模块，联系人模块，系统模块等。
 
 ## 快速开始
 
