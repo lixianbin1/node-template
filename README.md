@@ -35,17 +35,28 @@
   |—— swaggerConfig.js //swagger配置文件
 ```
 
-## 项目模块
+## 项目说明
+
+ - 项目支持 `WebSocket` 服务
+
+项目启动后，可以通过连接 `http://localhost:8889` 来访问项目的WebSocket。
+
+ - 项目支持 `Swagger` 文档
 
 项目启动后，可以通过访问 `http://localhost:8888/docs` 来访问项目的Swagger，查看接口文档。
+
+### WebSocket服务
+
+在用户登录后，可以在后台log记录查看用户的登录和下线信息，用户在发送消息的时候，WebSocket会同步推送消息给已登录用户并记录消息进数据库。
+
+## 项目模块
 
 ### 登录系统
 
 登录系统有token验证，登录成功后，会返回一个token，后续的请求都需要带上token。同时token只有一个小时的有效性（可以配置），超过一个小时，token失效。需要前端在请求接口时判断Header是否携带Refresh-Authorization，如果存在，则需要替换token。
 
-1. 用户登录 `/api/user/login`
-
-2. 退出登录 `/api/user/exit`
+ - 1. 用户登录 `/api/user/login`
+ - 2. 退出登录 `/api/user/exit`
 
 
 ### 用户模块
@@ -54,11 +65,9 @@
 
 在项目 `Interface` 和 `Router` 文件夹下，分别有 `user.js` 文件，分别对应用户模块的接口和路由。
 
-1. 获取用户列表 `/api/user/list`
-
-2. 获取用户详情 `/api/user/info`
-
-3. 创建用户 `/api/user/create`
+ - 1. 获取用户列表 `/api/user/list`
+ - 2. 获取用户详情 `/api/user/info`
+ - 3. 创建用户 `/api/user/create`
 
 ...
 
@@ -68,9 +77,8 @@
 
 在项目 `Interface` 和 `Router` 文件夹下，分别有 `message.js` 文件，分别对应消息模块的接口和路由。
 
-1. 发送消息 `/api/message/create`
-
-2. 获取消息列表 `/api/message/list`
+ - 1. 发送消息 `/api/message/create`
+ - 2. 获取消息列表 `/api/message/list`
 
 ...
 
