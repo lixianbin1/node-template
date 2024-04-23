@@ -71,7 +71,7 @@ exports.userloginPost = async(req,res)=>{
         if (!user || !bcrypt.compareSync(Password, user.Password)) {
           return res.status(403).send({status:"403",message:'邮箱或密码错误'});
         }
-        const token = jwt.sign({ id: user.UserID, name:user.UserName }, SECRET_KEY, { expiresIn: Expiration }); // token有效期
+        const token = jwt.sign({ id: user.UserID, name:user.UserName }, SECRET_KEY, { expiresIn: Expiration }); //token有效期
         res.send({status:"200",token,message:"登录成功"});
       });
     }finally{
@@ -80,6 +80,33 @@ exports.userloginPost = async(req,res)=>{
   }catch(err){
     logger.error('userloginPost Error:' + err)
     console.error('userloginPost Error:' , err);
+    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+  }
+}
+
+//用户退出
+exports.userExitget = async(req,res)=>{
+  try{
+    let UserID = req.user.id
+    let Token = req.headers.authorization.split(' ')[1];
+    let Expiration = new Date(req.user.exp * 1000).toLocaleString('zh-CN')
+    const db = await myPool.acquire()
+    try{
+      const stmt = db.prepare('INSERT INTO LoseToken (UserID, Token, Expiration) VALUES (?, ?, ?)');
+      stmt.run(UserID, Token, Expiration, (err) => {
+        if (err) {
+          logger.error('userExitget Error:' + err)
+          res.status(500).send({status:"500",message:'数据库查询出错'});
+        }else{
+          res.send({status:"200",message:"退出成功"});
+        }
+      })
+    }finally{
+      myPool.release(db); //释放连接 
+    }
+  }catch(err){
+    logger.error('userExitget Error:' + err)
+    console.error('userExitget Error:' , err);
     res.status(500).send({status:"500",message:'无法获取数据库连接'});
   }
 }
@@ -118,7 +145,6 @@ exports.userInfoGet= async(req,res)=>{
 exports.userListGet = async(req,res)=>{
   try{
     var { current,pageSize } = req.query;
-    console.log(current,pageSize)
     if(!current || Number(current)==NaN){
       current = 1 //当前页
     }
@@ -137,7 +163,6 @@ exports.userListGet = async(req,res)=>{
           delete data.Password
         })
         logger.debug(rows)
-        console.log(rows);
         res.send({
           status:"200",
           data:rows,

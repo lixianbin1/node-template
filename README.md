@@ -39,34 +39,45 @@
 
 项目启动后，可以通过访问 `http://localhost:8888/docs` 来访问项目的Swagger，查看接口文档。
 
+### 登录系统
+
+登录系统有token验证，登录成功后，会返回一个token，后续的请求都需要带上token。同时token只有一个小时的有效性（可以配置），超过一个小时，token失效。需要前端在请求接口时判断Header是否携带Refresh-Authorization，如果存在，则需要替换token。
+
+1. 用户登录 `/api/user/login`
+
+2. 退出登录 `/api/user/exit`
+
+
 ### 用户模块
+
+由于是内部项目，所有用户都是由管理员进行创建，同时密码为默认密码（可以配置），用户模块有创建，详情，列表等相关接口。
 
 在项目 `Interface` 和 `Router` 文件夹下，分别有 `user.js` 文件，分别对应用户模块的接口和路由。
 
-1. 用户登录
+1. 获取用户列表 `/api/user/list`
 
- - /api/user/login
+2. 获取用户详情 `/api/user/info`
 
-method: POST
-params: {
-  Email: 'string',    //邮件地址
-  Password: 'string'  //用户密码
-}
+3. 创建用户 `/api/user/create`
 
 ...
 
 ### 消息模块
 
+消息模块有发送消息，消息列表，创建群组，群组消息等相关接口。
+
 在项目 `Interface` 和 `Router` 文件夹下，分别有 `message.js` 文件，分别对应消息模块的接口和路由。
 
-1. 发送消息
+1. 发送消息 `/api/message/create`
 
- - /api/user/login
+2. 获取消息列表 `/api/message/list`
 
-method: POST
-params: {
-  Email: 'string',    //邮件地址
-  Password: 'string'  //用户密码
-}
 ...
 
+### 权限模块
+
+权限模块：角色管理，权限分配，权限详情，权限列表等。
+
+### 管理模块
+
+管理模块有：组织架构，部门管理，用户管理，系统管理等。

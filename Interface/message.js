@@ -29,7 +29,7 @@ exports.messageCreatePost = async(req,res)=>{
         } else {
           let obj = {MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp}
           res.status(200).send({ data:{MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp},status:"200",Times,message: '发送消息成功' });
-          WSdev.sendMessageToUser(ToUserID, Content);
+          WSdev.sendMessageToUser(ToUserID, JSON.stringify(obj));
         }
       })
     }finally{
@@ -72,7 +72,6 @@ exports.messageListGet = async(req,res)=>{
           }
           let reData=[]
           for(let i in Users){
-            console.log(i,Users,111)
             Users[i].Messages=[]
             for(let k in data){
               if(data[k].UserID == Users[i].UserID){
@@ -128,7 +127,6 @@ exports.userInfoGet= async(req,res)=>{
 exports.userListGet = async(req,res)=>{
   try{
     var { current,pageSize } = req.query;
-    console.log(current,pageSize)
     if(!current || Number(current)==NaN){
       current = 1 //当前页
     }
@@ -147,7 +145,6 @@ exports.userListGet = async(req,res)=>{
           delete data.Password
         })
         logger.debug(rows)
-        console.log(rows);
         res.send({
           status:"200",
           data:rows,
