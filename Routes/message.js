@@ -44,6 +44,7 @@ router.post('/api/message/create',authenticateToken,(req,res)=>{
  * GET /api/message/list
  * @summary 消息的列表接口
  * @tags Message
+ * @security BearerAuth
  * @param {string} UserID.query - 用户ID，如不传，则默认查询当前用户信息
  * @return {object} 200 - 请求成功 - application/json
  * @return 404 - 未查找到该用户信息

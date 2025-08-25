@@ -4,6 +4,7 @@ const User = require('../Interface/user')
 const Message = require('../Interface/message')
 const {authenticateToken} = require('../common/authenticate')
 
+
 /**
  * 用户登录的请求对象
  * @typedef {object} Login
@@ -14,25 +15,36 @@ const {authenticateToken} = require('../common/authenticate')
  * POST /api/user/login
  * @summary 用户的登录接口
  * @tags User
- * @param {Login} request.body - 用户信息 - application/json
+ * @param {Login} request.body - 用户信息
  * @return {object} 200 - 登录成功 - application/json
- * @return 403 - 邮箱或密码错误
+ * @return {object} 403 - 邮箱或密码错误 - application/json
  * @return 500 - 错误的查询
+ * @example request - 登录请求示例
+ * {
+ *     "Email": "xianbin@qq.com",
+ *     "Password": "123456"
+ * }
  * @example response - 200 - 登录成功示例 - application/json
  * {
  *     "token": "XXXXXXXXXX",
  *     "status": "200",
  *     "message": "登录成功"
  * }
+ * @example response - 403 - 登录失败示例 - application/json
+ * {
+ *     "status": "403",
+ *     "message": "邮箱或密码错误"
+ * }
  */
-router.post('/api/user/login',(req,res)=>{
-  User.userloginPost(req,res)
+router.post('/api/user/login', (req, res) => {
+  User.userloginPost(req, res)
 })
 
 /**
  * GET /api/user/exit
  * @summary 用户的退出接口
  * @tags User
+ * @security BearerAuth
  * @return {object} 200 - 退出成功 - application/json
  * @return 403 - token无效或已过期
  * @return 500 - 错误的查询
