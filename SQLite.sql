@@ -6,6 +6,13 @@ PRAGMA foreign_keys = off; -- 禁用外键约束，以便在创建表时避免�
 -- 开始一个事务，确保所有操作要么全部成功，要么全部失败
 BEGIN TRANSACTION;
 
+-- 失效token表：存储失效的token
+CREATE TABLE LoseToken (
+    Token TEXT PRIMARY KEY, -- 存储失效的token
+    UserID INTEGER NOT NULL, -- 引用Users表的UserID
+    Expiration TIMESTAMP NOT NULL -- token的过期时间
+);
+
 -- 用户表：存储用户信息，每个用户有唯一的 UserID
 CREATE TABLE IF NOT EXISTS Users (
     UserID TEXT (8, 36) PRIMARY KEY UNIQUE, -- 用户唯一标识
@@ -58,12 +65,13 @@ INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '001');
 CREATE TABLE IF NOT EXISTS Menus (
     MenuID TEXT PRIMARY KEY, -- 菜单唯一标识
     MenuName TEXT NOT NULL, -- 菜单名称
+    ZhName TEXT NOT NULL, -- 中文菜单名称
     ParentID TEXT DEFAULT NULL REFERENCES Menus (MenuID), -- 父菜单ID，用于表示层级结构
     Route TEXT, -- 菜单对应的路由或链接
     Icon TEXT, -- 菜单图标
     OrderIndex INTEGER DEFAULT 0 -- 菜单排序
 );
-INSERT INTO Menus (MenuID, MenuName, ParentID, Route, Icon, OrderIndex) VALUES ('001', '用户管理', '001', '/system/users', 'icon-users', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, Route, Icon, OrderIndex) VALUES ('001', 'MenuManager','菜单管理', '/system/menu', 'icon-menu', 1);
 
 -- 菜单权限关联表：存储菜单权限关系
 CREATE TABLE IF NOT EXISTS MenuPermissions (

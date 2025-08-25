@@ -1,6 +1,7 @@
 require('dotenv').config()
 const logger = require('./common/log');
 const fs = require('fs');
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const dbFilePath = './SQLite.db';
 const sqlFilePath = 'SQLite.sql';
@@ -64,11 +65,14 @@ const expressJSDocSwagger = require('express-jsdoc-swagger');
 const swaggerConfig = require('./swaggerConfig')
 expressJSDocSwagger(app)(swaggerConfig);
 
-//挂载路由
-const userRoutes=require('./Routes/user')
-const messageRoutes=require('./Routes/message')
-app.use('/',userRoutes)
-app.use('/',messageRoutes)
+// 动态加载 Routes 文件夹下的所有路由文件
+const routesDir = path.join(__dirname, 'Routes');
+fs.readdirSync(routesDir).forEach(file => {
+    if (file.endsWith('.js')) {
+        const route = require(path.join(routesDir, file));
+        app.use('/', route);
+    }
+});
 
 const PORT = process.env.PORT || 8888;
 

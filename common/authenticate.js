@@ -30,6 +30,7 @@ exports.authenticateToken=(req, res, next)=>{
                     const newToken = jwt.sign({ id: user.UserID, name:user.UserName }, SECRET_KEY, { expiresIn: Expiration });
                     res.setHeader('Refresh-Authorization',newToken );
                 }
+                console.log('token:',token)
                 req.user = user;
                 next();
             })

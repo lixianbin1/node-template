@@ -113,6 +113,7 @@ exports.userExitget = async(req,res)=>{
 
 //用户信息
 exports.userInfoGet= async(req,res)=>{
+  console.log('请求api/user/info接口')
   try{
     const db = await myPool.acquire()
     var { UserID } = req.query;
