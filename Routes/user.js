@@ -27,7 +27,7 @@ const {authenticateToken} = require('../common/authenticate')
  * @example response - 200 - 登录成功示例 - application/json
  * {
  *     "token": "XXXXXXXXXX",
- *     "status": "200",
+ *     "status": 200,
  *     "message": "登录成功"
  * }
  * @example response - 403 - 登录失败示例 - application/json
@@ -50,7 +50,7 @@ router.post('/api/user/login', (req, res) => {
  * @return 500 - 错误的查询
  * @example response - 200 - 退出成功示例 - application/json
  * {
- *     "status": "200",
+ *     "status": 200,
  *     "message": "退出成功"
  * }
  */
@@ -76,7 +76,7 @@ router.get('/api/user/exit',authenticateToken,(req,res)=>{
  * {
  *     "id": "XXXXXXXXX",
  *     "UserName": "XXXXXXXXXX",
- *     "status": "200",
+ *     "status": 200,
  *     "message": "用户注册成功"
  * }
  */
@@ -100,7 +100,7 @@ router.post('/api/user/create',authenticateToken,(req,res)=>{
  *         "Email": "XXXXXXXXXX",
  *         "CreateTime": "XXXXXXXXXX"
  *     },
- *     "status": "200",
+ *     "status": 200,
  *     "message": "成功"
  * }
  */
@@ -126,12 +126,17 @@ router.get('/api/user/info',authenticateToken,(req,res)=>{
  *     }],
  *     "current" : 1,
  *     "pageSize": 10,
- *     "status": "200",
+ *     "status": 200,
  *     "message": "成功"
  * }
  */
 router.get('/api/user/list',authenticateToken,(req,res)=>{
   User.userListGet(req,res)
+})
+
+
+router.post('/api/user/delete',authenticateToken,(req,res)=>{
+  User.userDelete(req,res)
 })
 
 module.exports = router;

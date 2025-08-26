@@ -15,7 +15,7 @@ exports.messageCreatePost = async(req,res)=>{
     const { ToUserID,Content,GroupID,Times } = req.body;
     const FromUserID = req.user.id
     if(!ToUserID){
-      return res.status(400).send({ status:"400",message: '未填写接收人ID' });
+      return res.code(400).send({ code:"400",message: '未填写接收人ID' });
     }
     const db = await myPool.acquire()
     try{
@@ -25,10 +25,10 @@ exports.messageCreatePost = async(req,res)=>{
       stmt.run(MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp, (err) => {
         if (err) {
           logger.error('userCreatePost Error:' + err)
-          res.status(500).send({status:"500",message:'发送消息失败'}); 
+          res.code(500).send({code:500,message:'发送消息失败'}); 
         } else {
           let obj = {MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp}
-          res.status(200).send({ data:{MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp},status:"200",Times,message: '发送消息成功' });
+          res.code(200).send({ data:{MessageID, FromUserID, ToUserID, GroupID,Content,Timestamp},code:200,Times,message: '发送消息成功' });
           WSdev.sendMessageToUser(ToUserID, JSON.stringify(obj));
         }
       })
@@ -38,7 +38,7 @@ exports.messageCreatePost = async(req,res)=>{
   }catch(err){
     logger.error('userCreatePost Error:' + err)
     console.error('userCreatePost Error:', err);
-    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+    res.code(500).send({code:500,message:'无法获取数据库连接'});
   }
 }
 
@@ -54,7 +54,7 @@ exports.messageListGet = async(req,res)=>{
       db.all('SELECT * FROM Messages WHERE FromUserID = ? OR ToUserID = ?', [UserID,UserID], (err, data) => {
         if (err) {
           logger.error('userloginPost Error:' + err)
-          res.status(500).send({status:"500",message:'数据库查询出错'});
+          res.code(500).send({code:500,message:'数据库查询出错'});
         } else {
           let Users=new Set([]) //所有接收消息用户
           for(let i in data){
@@ -64,7 +64,7 @@ exports.messageListGet = async(req,res)=>{
             db.get('SELECT * FROM Users WHERE UserID = ?',[Users[i]],(err,data)=>{
               if(err){
                 logger.error('userloginPost Error:' + err)
-                res.status(500).send({status:"500",message:'数据库查询出错'});
+                res.code(500).send({code:500,message:'数据库查询出错'});
               }else{
                 Users[i] = data
               }
@@ -80,7 +80,7 @@ exports.messageListGet = async(req,res)=>{
             }
             reData.push(Users[i])
           }
-          res.status(200).send({ data:reData,status:"200",message: '发送消息成功' });
+          res.code(200).send({ data:reData,code:200,message: '发送消息成功' });
         }
       });
     }finally{
@@ -89,7 +89,7 @@ exports.messageListGet = async(req,res)=>{
   }catch(err){
     logger.error('userloginPost Error:' + err)
     console.error('userloginPost Error:' , err);
-    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+    res.code(500).send({code:500,message:'无法获取数据库连接'});
   }
 }
 
@@ -105,13 +105,13 @@ exports.userInfoGet= async(req,res)=>{
       db.get('SELECT * FROM users WHERE UserID = ?', [UserID], (err, user) => {
         if (err) {
           logger.error('userloginPost Error:' + err)
-          res.status(500).send({status:"500",message:'数据库查询出错'});
+          res.code(500).send({code:500,message:'数据库查询出错'});
         }
         if(!user){
-          res.status(404).send({status:"404",message:'未查找到该用户信息'})
+          res.code(404).send({code:"404",message:'未查找到该用户信息'})
         }
         delete user.Password
-        res.send({status:"200",data:user,message:"成功"});
+        res.send({code:200,data:user,message:"成功"});
       });
     }finally{
       myPool.release(db); //释放连接 
@@ -119,7 +119,7 @@ exports.userInfoGet= async(req,res)=>{
   }catch(err){
     logger.error('userloginPost Error:' + err)
     console.error('userloginPost Error:' , err);
-    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+    res.code(500).send({code:500,message:'无法获取数据库连接'});
   }
 }
 
@@ -139,14 +139,14 @@ exports.userListGet = async(req,res)=>{
       db.all(`SELECT * FROM users LIMIT ? OFFSET ?`, [pageSize, offSize], (err, rows) => {  
         if (err) {  
           logger.error('userloginPost Error:' + err)
-          res.status(500).send({status:"500",message:'数据库查询出错'});
+          res.code(500).send({code:500,message:'数据库查询出错'});
         }
         rows.forEach(data=>{
           delete data.Password
         })
         logger.debug(rows)
         res.send({
-          status:"200",
+          code:200,
           data:rows,
           current,
           pageSize,
@@ -159,6 +159,6 @@ exports.userListGet = async(req,res)=>{
   }catch(err){
     logger.error('userloginPost Error:' + err)
     console.error('userloginPost Error:' , err);
-    res.status(500).send({status:"500",message:'无法获取数据库连接'});
+    res.code(500).send({code:500,message:'无法获取数据库连接'});
   }
 }

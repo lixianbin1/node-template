@@ -32,7 +32,7 @@ const {authenticateToken} = require('../common/authenticate')
  *         "UserID": "XXXXXXXXX"
  *     },
  *     "Times": "XXXXXXXXXX",
- *     "status": "200",
+ *     "status": 200,
  *     "message": "发送消息成功"
  * }
  */
@@ -52,7 +52,7 @@ router.post('/api/message/create',authenticateToken,(req,res)=>{
  * @example response - 200 - 登录成功示例 - application/json
  * {
  *     "data": [],
- *     "status": "200",
+ *     "status": 200,
  *     "message": "成功"
  * }
  */

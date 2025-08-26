@@ -51,7 +51,10 @@ CREATE TABLE IF NOT EXISTS Permissions (
     PermissionName TEXT NOT NULL, -- 权限名称
     Description TEXT -- 权限描述
 );
-INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('001', '用户列表', '查看用户列表权限');
+INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('001', '系统管理', '查看用户列表权限');
+INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('002', '菜单管理', '查看用户列表权限');
+INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('003', '用户管理', '查看用户列表权限');
+INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('004', '角色管理', '查看用户列表权限');
 
 -- 角色权限关联表：存储角色权限关系，每个角色可以有多个权限
 CREATE TABLE IF NOT EXISTS RolePermissions (
@@ -60,6 +63,9 @@ CREATE TABLE IF NOT EXISTS RolePermissions (
     PRIMARY KEY (RoleID, PermissionID) -- 复合主键
 );
 INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '001');
+INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '002');
+INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '003');
+INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '004');
 
 -- 菜单表：存储菜单信息，每个菜单有唯一的 MenuID
 CREATE TABLE IF NOT EXISTS Menus (
@@ -71,7 +77,10 @@ CREATE TABLE IF NOT EXISTS Menus (
     Icon TEXT, -- 菜单图标
     OrderIndex INTEGER DEFAULT 0 -- 菜单排序
 );
-INSERT INTO Menus (MenuID, MenuName, ZhName, Route, Icon, OrderIndex) VALUES ('001', 'MenuManager','菜单管理', '/system/menu', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('001', 'SystemManager','系统管理',null, '/system/', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('002', 'MenuManager','菜单管理', '001', '/system/Menu', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('003', 'UserManager','用户管理', '001', '/system/Users', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('004', 'RoleManager','角色管理', '001', '/system/Roles', 'icon-menu', 1);
 
 -- 菜单权限关联表：存储菜单权限关系
 CREATE TABLE IF NOT EXISTS MenuPermissions (
@@ -80,6 +89,9 @@ CREATE TABLE IF NOT EXISTS MenuPermissions (
     PRIMARY KEY (MenuID, PermissionID) -- 复合主键
 );
 INSERT INTO MenuPermissions (MenuID, PermissionID) VALUES ('001', '001');
+INSERT INTO MenuPermissions (MenuID, PermissionID) VALUES ('002', '002');
+INSERT INTO MenuPermissions (MenuID, PermissionID) VALUES ('003', '003');
+INSERT INTO MenuPermissions (MenuID, PermissionID) VALUES ('004', '004');
 
 -- 部门表：存储部门信息，每个部门有唯一的 DepartmentID，支持层级结构（通过 ParentID）
 CREATE TABLE IF NOT EXISTS Departments (
