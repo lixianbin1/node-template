@@ -48,9 +48,6 @@ if (!fs.existsSync(dbFilePath)) {
   console.log('已检测到SQLite数据库，无需初始化。');
 }
 
-
-
-
 //express配置
 const express=require('express')
 const app = express();

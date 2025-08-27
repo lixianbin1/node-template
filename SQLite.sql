@@ -69,18 +69,18 @@ INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '004');
 
 -- 菜单表：存储菜单信息，每个菜单有唯一的 MenuID
 CREATE TABLE IF NOT EXISTS Menus (
-    MenuID TEXT PRIMARY KEY, -- 菜单唯一标识
+    MenuID INTEGER PRIMARY KEY AUTOINCREMENT, -- 菜单唯一标识
     MenuName TEXT NOT NULL, -- 菜单名称
-    ZhName TEXT NOT NULL, -- 中文菜单名称
-    ParentID TEXT DEFAULT NULL REFERENCES Menus (MenuID), -- 父菜单ID，用于表示层级结构
-    Route TEXT, -- 菜单对应的路由或链接
+    ZhName TEXT, -- 中文菜单名称
+    ParentID INTEGER DEFAULT NULL REFERENCES Menus (MenuID), -- 父菜单ID，用于表示层级结构
+    Route TEXT NOT NULL, -- 菜单对应的路由或链接
     Icon TEXT, -- 菜单图标
     OrderIndex INTEGER DEFAULT 0 -- 菜单排序
 );
-INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('001', 'SystemManager','系统管理',null, '/system/', 'icon-menu', 1);
-INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('002', 'MenuManager','菜单管理', '001', '/system/Menu', 'icon-menu', 1);
-INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('003', 'UserManager','用户管理', '001', '/system/Users', 'icon-menu', 1);
-INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES ('004', 'RoleManager','角色管理', '001', '/system/Roles', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES (1, 'SystemManager','系统管理',null, '/system/', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES (2, 'MenuManager','菜单管理', 1, '/system/Menu', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES (3, 'UserManager','用户管理', 1, '/system/Users', 'icon-menu', 1);
+INSERT INTO Menus (MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex) VALUES (4, 'RoleManager','角色管理', 1, '/system/Roles', 'icon-menu', 1);
 
 -- 菜单权限关联表：存储菜单权限关系
 CREATE TABLE IF NOT EXISTS MenuPermissions (
