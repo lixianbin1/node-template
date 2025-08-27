@@ -27,4 +27,33 @@ const opts = {
 
 const myPool = genericPool.createPool(factory, opts);
 
+myPool.status = ()=>{
+  return {
+    size: {
+      label:'当前连接数',
+      value:myPool.size
+    },
+    available: {
+      label:'空闲连接数',
+      value:myPool.available
+    },
+    borrowed: {
+      label:'已借连接数',
+      value:myPool.borrowed
+    },
+    pending: {
+      label:'等待连接数',
+      value:myPool.pending
+    },
+    max: {
+      label:'最大连接数',
+      value:myPool.max
+    },
+    min: {
+      label:'最小连接数',
+      value:myPool.min
+    },
+  }
+}
+
 module.exports = myPool;

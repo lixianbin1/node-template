@@ -60,6 +60,7 @@ const bodyParser = require('body-parser')
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
+
 //自动生成Swagger配置
 const expressJSDocSwagger = require('express-jsdoc-swagger');
 const swaggerConfig = require('./swaggerConfig')

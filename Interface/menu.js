@@ -19,7 +19,7 @@ exports.dynamicMenu = async (req, res) => {
       db.all(`SELECT RoleID FROM UserRoles WHERE UserID = ?`, [UserID], (err, rolesRow) => {
         if (err) {
           logger.error('dynamicMenu Error:', err);
-          res.code(500).send({ code: 500, message: '数据库查询出错' });
+          res.status(500).send({ code: 500, message: '数据库查询出错' });
           return;
         }
         const roleIDs = rolesRow.map(role => role.RoleID);
@@ -28,7 +28,7 @@ exports.dynamicMenu = async (req, res) => {
         db.all(`SELECT PermissionID FROM RolePermissions WHERE RoleID IN (${roleIDs.map(() => '?').join(', ')})`, roleIDs, (err, permissionsRows) => {
           if (err) {
             logger.error('dynamicMenu Error:', err);
-            res.code(500).send({ code: 500, message: '数据库查询出错' });
+            res.status(500).send({ code: 500, message: '数据库查询出错' });
             return;
           }
           const permissionIDs = permissionsRows.map(permission => permission.PermissionID);
@@ -36,7 +36,7 @@ exports.dynamicMenu = async (req, res) => {
           db.all(`SELECT MenuID FROM MenuPermissions WHERE PermissionID IN (${permissionIDs.map(() => '?').join(', ')})`, permissionIDs, (err, menusRows) => {
             if (err) {
               logger.error('dynamicMenu Error:', err);
-              res.code(500).send({ code: 500, message: '数据库查询出错' });
+              res.status(500).send({ code: 500, message: '数据库查询出错' });
               return;
             }
             const menus =  menusRows.map(menu => menu.MenuID)
@@ -45,7 +45,7 @@ exports.dynamicMenu = async (req, res) => {
             db.all(`SELECT MenuID, MenuName,ZhName, ParentID, Route, Icon, OrderIndex FROM Menus WHERE MenuID IN (${menus.map(() => '?').join(', ')}) ORDER BY OrderIndex`, menus, (err, menuDetailsRows) => {
               if (err) {
                 logger.error('dynamicMenu Error:', err);
-                res.code(500).send({ code: 500, message: '数据库查询出错' });
+                res.status(500).send({ code: 500, message: '数据库查询出错' });
                 return;
               }
               const data = menuDetailsRows.map(menu => ({
@@ -73,7 +73,7 @@ exports.dynamicMenu = async (req, res) => {
   } catch (err) {
     logger.error('dynamicMenu Error:', err);
     console.error('dynamicMenu Error:', err);
-    res.code(500).send({ code: 500, message: '无法获取数据库连接' });
+    res.status(500).send({ code: 500, message: '无法获取数据库连接' });
   }
 };
 
@@ -148,9 +148,9 @@ exports.addMenuPost = async (req, res) => {
         if (err) {
           logger.error('userCreatePost Error:' + err)
           logger.error(req.body)
-          res.code(500).send({code:500,message:'菜单创建失败'}); 
+          res.status(500).send({code:500,message:'菜单创建失败'}); 
         } else {
-          res.code(200).send({ UserID, UserName,code:200,message: '菜单创建成功' });
+          res.status(200).send({ UserID, UserName,code:200,message: '菜单创建成功' });
         }
       });
     }finally{
