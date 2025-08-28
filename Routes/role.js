@@ -8,6 +8,14 @@ router.get('/api/role/list',authenticateToken,(req,res)=>{
   Role.roleListGet(req,res)
 })
 
+router.post('/api/role/create',authenticateToken,(req,res)=>{
+  Role.roleCreate(req,res)
+})
+
+router.post('/api/role/update',authenticateToken,(req,res)=>{
+  Role.roleUpdate(req,res)
+})
+
 router.post('/api/role/delete',authenticateToken,(req,res)=>{
   Role.deleteRole(req,res)
 })

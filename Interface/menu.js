@@ -9,71 +9,89 @@ const logger = log4js.getLogger('user');
 
 //菜单权限
 exports.dynamicMenu = async (req, res) => {
-  logger.info('请求api/dynamic/menu接口');
+  const user = req.user.name;
+  const time = new Date().toLocaleString();
+  console.log(`${time}'：${user} 请求动态菜单：/api/dynamic/menu `);
+  logger.info(`${time}'：${user} 请求菜单列表：/api/dynamic/menu `);
+  const db = await myPool.acquire();
   try {
-    const db = await myPool.acquire();
-    try {
-      let UserID = req.user.id;
+    let UserID = req.user.id;
 
-      // 查询用户的角色
-      db.all(`SELECT RoleID FROM UserRoles WHERE UserID = ?`, [UserID], (err, rolesRow) => {
+    const roleIDs = await new Promise((resolve, reject) => {
+      db.all(`SELECT RoleID FROM UserRoles WHERE UserID = ?`, [UserID], (err, rows) => {
         if (err) {
-          logger.error('dynamicMenu Error:', err);
-          res.status(500).send({ code: 500, message: '数据库查询出错' });
-          return;
+          reject(err);
+        } else {
+          const roleIDs = rows.map(role => role.RoleID);
+          resolve(roleIDs);
         }
-        const roleIDs = rolesRow.map(role => role.RoleID);
+      });
+    });
+    if (roleIDs.length === 0) {
+      res.send({ code: 403, message: '无权限查询菜单数据' });
+      return;
+    }
+    if (roleIDs.includes('admin')){
 
-        // 查询角色的权限
-        db.all(`SELECT PermissionID FROM RolePermissions WHERE RoleID IN (${roleIDs.map(() => '?').join(', ')})`, roleIDs, (err, permissionsRows) => {
+      // 管理员权限
+      menusData = await new Promise((resolve, reject) => {
+        db.all(`SELECT * FROM Menus`, (err, rows) => {
           if (err) {
-            logger.error('dynamicMenu Error:', err);
-            res.status(500).send({ code: 500, message: '数据库查询出错' });
-            return;
+            reject(err);
+          } else {
+            const data = rows.map(menu => ({
+              id: menu.MenuID,
+              name: menu.MenuName,
+              zhName: menu.ZhName,
+              parentID: menu.ParentID,
+              route: menu.Route,
+              icon: menu.Icon,
+              index: menu.OrderIndex
+            }));
+            resolve(data);
           }
-          const permissionIDs = permissionsRows.map(permission => permission.PermissionID);
-          // 查询权限对应的菜单
-          db.all(`SELECT MenuID FROM MenuPermissions WHERE PermissionID IN (${permissionIDs.map(() => '?').join(', ')})`, permissionIDs, (err, menusRows) => {
-            if (err) {
-              logger.error('dynamicMenu Error:', err);
-              res.status(500).send({ code: 500, message: '数据库查询出错' });
-              return;
-            }
-            const menus =  menusRows.map(menu => menu.MenuID)
-
-            // 查询菜单
-            db.all(`SELECT MenuID, MenuName,ZhName, ParentID, Route, Icon, OrderIndex FROM Menus WHERE MenuID IN (${menus.map(() => '?').join(', ')}) ORDER BY OrderIndex`, menus, (err, menuDetailsRows) => {
-              if (err) {
-                logger.error('dynamicMenu Error:', err);
-                res.status(500).send({ code: 500, message: '数据库查询出错' });
-                return;
-              }
-              const data = menuDetailsRows.map(menu => ({
-                id: menu.MenuID,
-                name: menu.MenuName,
-                zhName: menu.ZhName,
-                parentID: menu.ParentID,
-                route: menu.Route,
-                icon: menu.Icon,
-                index: menu.OrderIndex
-              }));
-              res.send({code:200,data,message:"请求成功"});
-            });
-          });
         });
       });
-    } finally {
-      try {
-        myPool.release(db); // 释放连接
-      } catch (releaseErr) {
-        logger.error('dynamicMenu Error:', releaseErr);
-        console.error('dynamicMenu Error:', releaseErr);
-      }
+    }else{ 
+      // 非管理员权限
+      // 获取角色的菜单权限
+      const menusIDs = await new Promise((resolve, reject) => {
+        db.all(`SELECT PermissionID FROM RolePermissions WHERE RoleID IN (${roleIDs.map(() => '?').join(', ')})`, roleIDs, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
+      // 查询菜单
+      menusData = await new Promise((resolve, reject) => {
+        db.all(`SELECT MenuID, MenuName,ZhName, ParentID, Route, Icon, OrderIndex FROM Menus WHERE MenuID IN (${menusIDs.map(() => '?').join(', ')}) ORDER BY OrderIndex`, menusIDs, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            const data = rows.map(menu => ({
+              id: menu.MenuID,
+              name: menu.MenuName,
+              zhName: menu.ZhName,
+              parentID: menu.ParentID,
+              route: menu.Route,
+              icon: menu.Icon,
+              index: menu.OrderIndex
+            }));
+            resolve(data);
+          }
+        })
+      })
     }
-  } catch (err) {
-    logger.error('dynamicMenu Error:', err);
-    console.error('dynamicMenu Error:', err);
-    res.status(500).send({ code: 500, message: '无法获取数据库连接' });
+    res.send({ code: 200, data: menusData });
+  } finally {
+    try {
+      myPool.release(db); // 释放连接
+    } catch (releaseErr) {
+      logger.error('dynamicMenu Error:', releaseErr);
+      console.error('dynamicMenu Error:', releaseErr);
+    }
   }
 };
 

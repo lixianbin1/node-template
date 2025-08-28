@@ -45,27 +45,20 @@ CREATE TABLE IF NOT EXISTS UserRoles (
 INSERT INTO UserRoles (UserID, RoleID) VALUES ('001', 'admin');
 INSERT INTO UserRoles (UserID, RoleID) VALUES ('002', 'user');
 
--- 权限表：存储权限信息，每个权限有唯一的 PermissionID
-CREATE TABLE IF NOT EXISTS Permissions (
-    PermissionID TEXT PRIMARY KEY, -- 权限唯一标识
-    PermissionName TEXT NOT NULL, -- 权限名称
-    Description TEXT -- 权限描述
-);
-INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('001', '系统管理', '查看用户列表权限');
-INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('002', '菜单管理', '查看用户列表权限');
-INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('003', '用户管理', '查看用户列表权限');
-INSERT INTO Permissions (PermissionID, PermissionName, Description) VALUES ('004', '角色管理', '查看用户列表权限');
-
--- 角色权限关联表：存储角色权限关系，每个角色可以有多个权限
+-- 角色菜单关联表：存储角色菜单权限
 CREATE TABLE IF NOT EXISTS RolePermissions (
     RoleID TEXT REFERENCES Roles (RoleID), -- 角色ID
-    PermissionID TEXT REFERENCES Permissions (PermissionID), -- 权限ID
-    PRIMARY KEY (RoleID, PermissionID) -- 复合主键
+    MenuID TEXT REFERENCES Permissions (MenuID), -- 权限ID
+    PRIMARY KEY (RoleID, MenuID) -- 复合主键
 );
-INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '001');
-INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '002');
-INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '003');
-INSERT INTO RolePermissions (RoleID, PermissionID) VALUES ('admin', '004');
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('admin', 1);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('admin', 2);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('admin', 3);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('admin', 4);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('user', 1);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('user', 2);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('user', 3);
+INSERT INTO RolePermissions (RoleID, MenuID) VALUES ('user', 4);
 
 -- 菜单表：存储菜单信息，每个菜单有唯一的 MenuID
 CREATE TABLE IF NOT EXISTS Menus (
