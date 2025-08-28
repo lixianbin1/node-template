@@ -15,7 +15,7 @@ CREATE TABLE LoseToken (
 
 -- 用户表：存储用户信息，每个用户有唯一的 UserID
 CREATE TABLE IF NOT EXISTS Users (
-    UserID TEXT (8, 36) PRIMARY KEY UNIQUE, -- 用户唯一标识
+    UserID INTEGER PRIMARY KEY AUTOINCREMENT, -- 用户唯一标识
     UserName TEXT (1, 32) NOT NULL, -- 用户名称
     Password TEXT (8, 32) NOT NULL, -- 用户密码
     Email TEXT (0, 256) UNIQUE NOT NULL, -- 用户邮箱
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS Users (
     CreateTime DATETIME -- 用户创建时间
 );
 -- 插入用户数据
-INSERT INTO Users (UserID, UserName, Password, Email, Status, LastLoginTime, CreateTime) VALUES ('001', 'admin', '$2b$12$89LBDNTzRH4srb6M1NLg6.U103WHqlDwVMMXl80FfLlJKp6NYe8x6', 'xianbin@qq.com','1', 'Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)','Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)');
-INSERT INTO Users (UserID, UserName, Password, Email, Status, LastLoginTime, CreateTime) VALUES ('002', '张三', '$2b$12$89LBDNTzRH4srb6M1NLg6.U103WHqlDwVMMXl80FfLlJKp6NYe8x6', 'zhansan@qq.com','1', 'Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)','Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)');
+INSERT INTO Users ( UserName, Password, Email, Status, LastLoginTime, CreateTime) VALUES ( 'admin', '$2b$12$89LBDNTzRH4srb6M1NLg6.U103WHqlDwVMMXl80FfLlJKp6NYe8x6', 'xianbin@qq.com','1', 'Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)','Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)');
+INSERT INTO Users ( UserName, Password, Email, Status, LastLoginTime, CreateTime) VALUES ( '张三', '$2b$12$89LBDNTzRH4srb6M1NLg6.U103WHqlDwVMMXl80FfLlJKp6NYe8x6', 'zhansan@qq.com','1', 'Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)','Wed Mar 27 2024 14:19:29 GMT+0800 (中国标准时间)');
 
 -- 角色表：存储角色信息，每个角色有唯一的 RoleID
 CREATE TABLE IF NOT EXISTS Roles (
@@ -42,8 +42,9 @@ CREATE TABLE IF NOT EXISTS UserRoles (
     RoleID TEXT REFERENCES Roles (RoleID), -- 角色ID
     PRIMARY KEY (UserID, RoleID) -- 复合主键
 );
-INSERT INTO UserRoles (UserID, RoleID) VALUES ('001', 'admin');
-INSERT INTO UserRoles (UserID, RoleID) VALUES ('002', 'user');
+INSERT INTO UserRoles (UserID, RoleID) VALUES (1, 'admin');
+INSERT INTO UserRoles (UserID, RoleID) VALUES (2, 'user');
+INSERT INTO UserRoles (UserID, RoleID) VALUES (1, 'user');
 
 -- 角色菜单关联表：存储角色菜单权限
 CREATE TABLE IF NOT EXISTS RolePermissions (

@@ -9,7 +9,11 @@ const logger = log4js.getLogger('user');
 
 //创建用户
 exports.userCreatePost = async(req,res)=>{
-  logger.info('请求api/user/create接口')
+  const user = req.user.name;
+  const time = new Date().toLocaleString();
+  console.log(`${time}'：${user} 创建用户：/api/user/create`);
+  logger.info(`${time}'：${user} 创建用户：/api/user/create `);
+  const db = await myPool.acquire();
   try{
     let { UserName,Password,Email,RoleID } = req.body;
     if(!Email){
@@ -18,47 +22,65 @@ exports.userCreatePost = async(req,res)=>{
     if(!Password){
       Password = process.env.DEFAULT_PASSWORD;
     }
-    const Timestamp = new Date().toLocaleString('zh-CN')
-    const db = await myPool.acquire()
-    try{
-      db.get('SELECT Email FROM users WHERE Email = ?',[Email],async(err,row)=>{
-        if(err){
-          logger.error('userCreatePost Error:' + err)
-          res.status(500).send({code:500,message:'数据库查询出错'});
-        }else if(row){
-          res.status(409).send({code:"409",message:'该邮箱已注册用户'})
-        }else{
-          const UserID = uuidv4()
-          const enPassword = await bcrypt.hash(Password, 12);
-          const stmt = db.prepare('INSERT INTO users (UserID, UserName, Password, Email,CreateTime) VALUES (?, ?, ? ,?,?)');
-          stmt.run(UserID, UserName, enPassword, Email ,Timestamp, (err) => {
-            if (err) {
-              logger.error('userCreatePost Error:' + err)
-              logger.error(req.body)
-              res.status(500).send({code:500,message:'创建账号失败'}); 
-            } else {
-              const toUserRoles = db.prepare('INSERT INTO UserRoles (UserID, RoleID) VALUES (?,?)');
-              toUserRoles.run(UserID, RoleID, (err) => {
-                if (err) {
-                  logger.error('userCreatePost Error:' + err)
-                  logger.error(req.body)
-                  res.status(500).send({code:500,message:'关联角色失败'}); 
-                } else {
-                  res.status(200).send({code:200,message:'创建账号成功'}); 
-                }
-              })
-            }
-          })
+
+    //检测邮箱是否被占用
+    const emailRun = await new Promise((resolve, reject) => {
+      db.get('SELECT Email FROM users WHERE Email = ?', [Email], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row !== undefined);
         }
-      })
-    }finally{
-      myPool.release(db); //释放连接 
+      });
+    });
+    if(emailRun){
+      return res.send({ code:"409",message: '该邮箱已注册用户' });
     }
+
+    //创建用户
+    const enPassword = await bcrypt.hash(Password, 12);
+    const Insert = await new Promise((resolve, reject) => {
+      db.run('INSERT INTO users (UserName, Password, Email,CreateTime) VALUES (?, ? ,?,?)', [UserName, enPassword, Email ,time], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+
+    //查询用户ID
+    const userID = await new Promise((resolve, reject) => {
+      db.get('SELECT UserID FROM users WHERE Email = ?', [Email], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row.UserID);
+        }
+      });
+    });
+
+    //关联表
+    RoleID.forEach(async(item)=>{
+      const toUserRoles = await new Promise((resolve, reject) => {
+        db.run('INSERT INTO UserRoles (UserID, RoleID) VALUES (?,?)', [userID, item], (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        });
+      });
+    })
+
+    res.send({ code:"200",message: '创建账号成功' });
+
   }catch(err){
-    logger.error('userCreatePost Error:' + err)
-    console.error('userCreatePost Error:', err);
-    res.status(500).send({code:500,message:'无法获取数据库连接'});
+    console.log(`${time}'：${user} 创建角色 Error`, err);
+    logger.error(`${time}'：${user} 创建角色 Error`, err);
+    res.send({code:500,message:'请求失败'});
   }
+  myPool.release(db); //释放连接 
 }
 
 //用户登录
@@ -153,62 +175,65 @@ exports.userInfoGet= async(req,res)=>{
 
 //用户列表
 exports.userListGet = async(req,res)=>{
+  const user = req.user.name;
+  const time = new Date().toLocaleString();
+  console.log(`${time}'：${user} 用户列表：/api/user/list`);
+  logger.info(`${time}'：${user} 用户列表：/api/user/list `);
+  const db = await myPool.acquire();
   try{
-    var { current,pageSize } = req.query;
-    if(!current || Number(current)==NaN){
-      current = 1 //当前页
-    }
-    if(!pageSize || Number(pageSize)==NaN){
-      pageSize = 10 //分页数
-    }
-    const offSize = (current - 1) * pageSize;
-    const db = await myPool.acquire()
-    try{
-      db.all(`SELECT * FROM users LIMIT ? OFFSET ?`, [pageSize, offSize], (err, rows) => {  
-        if (err) {  
-          logger.error('userloginPost Error:' + err)
-          res.status(500).send({code:500,message:'数据库查询出错'});
-        }
-        const rolePromises = rows.map(data => {
-          delete data.Password
-          return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM UserRoles WHERE UserID = ?`, [data.UserID], (err, rowRoles) => {
-              if (err) {
-                reject(err);
-              } else {
-                const roles = rowRoles.map(role => role.RoleID);
-                data.UserRoles = roles;
-                resolve();
-              }
-            })
-          })
-        })
+    const current = parseInt(req.query.current, 10);
+    const pageSize = parseInt(req.query.pageSize, 10);
 
-        // 等待所有 Promise 完成
-        Promise.all(rolePromises)
-          .then(() => {
-            logger.debug(rows);
-            res.send({
-              code: 200,
-              data: rows,
-              current,
-              pageSize,
-              message: "成功"
-            });
-          })
-          .catch(err => {
-            logger.error('userloginPost Error:' + err);
-            res.status(500).send({ code: 500, message: '数据库查询出错' });
-          });
-      });
-    }finally{
-      myPool.release(db);
-    }
+    //获取总数
+    const totalsql = `SELECT COUNT(*) AS total FROM Users`;
+    const total = await new Promise((resolve, reject) => {
+      db.get(totalsql, (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row.total);
+        }
+      })
+    })
+
+    //查询用户
+    const offset = (current - 1) * pageSize;
+    const querySql = `
+      SELECT 
+        u.UserID,
+        u.UserName,
+        u.Email,
+        (SELECT GROUP_CONCAT(r.RoleName, ', ') 
+         FROM UserRoles ur 
+         JOIN Roles r ON ur.RoleID = r.RoleID 
+         WHERE ur.UserID = u.UserID) AS Roles
+      FROM 
+        Users u
+      LIMIT ? OFFSET ?;
+    `;
+    const users = await new Promise((resolve, reject) => {
+      db.all(querySql, [pageSize, offset], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      })
+    })
+    res.send({
+      code: 200,
+      data: users,
+      total,
+      current,
+      pageSize,
+      message: "成功"
+    });
   }catch(err){
     logger.error('userloginPost Error:' + err)
     console.error('userloginPost Error:' , err);
     res.status(500).send({code:500,message:'无法获取数据库连接'});
   }
+  myPool.release(db);
 }
 
 //删除用户

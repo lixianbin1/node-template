@@ -27,6 +27,7 @@ exports.dynamicMenu = async (req, res) => {
         }
       });
     });
+    console.log(roleIDs)
     if (roleIDs.length === 0) {
       res.send({ code: 403, message: '无权限查询菜单数据' });
       return;
