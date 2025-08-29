@@ -98,68 +98,51 @@ exports.dynamicMenu = async (req, res) => {
 
 //菜单列表
 exports.menuListGet = async (req, res) => {
-  //插入日志
+  // 插入日志
   const user = req.user.name;
   const time = new Date().toLocaleString();
-  console.log(`${time}'：${user} 请求菜单列表：/api/menu/list `);
-  logger.info(`${time}'：${user} 请求菜单列表：/api/menu/list `);
+  const logMessage = `${time}: ${user} 菜单列表：/api/menu/list`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
+  console.log(myPool.status())
   try {
     //获取请求参数并设置默认值
-    let { 
-      current = 1, 
-      pageSize = 10,
-      MenuID,
-      MenuName,
-      ZhName,
-      ParentID,
-      Route,
-      Icon,
-      OrderIndex
-    } = req.query;
-    current = Number(current);
-    pageSize = Number(pageSize);
+    let {MenuID,MenuName,ZhName,ParentID,Route,Icon,OrderIndex} = req.body;
+    const current = parseInt(req.body.current, 10);
+    const pageSize = parseInt(req.body.pageSize, 10);
     offSize = (current - 1) * pageSize;
 
     // 构造动态 SQL 查询
     let whereClauses = [];
     let params = [];
-    if (MenuID) {
-      whereClauses.push("MenuID LIKE ?");
-      params.push(`%${MenuID}%`);
-    }
-    if (MenuName) {
-      whereClauses.push("MenuName LIKE ?");
-      params.push(`%${MenuName}%`);
-    }
-    if (ZhName) {
-      whereClauses.push("ZhName LIKE ?");
-      params.push(`%${ZhName}%`);
-    }
-    if (ParentID) {
-      whereClauses.push("ParentID LIKE ?");
-      params.push(`%${ParentID}%`);
-    }
-    if (Route) {
-      whereClauses.push("Route LIKE ?");
-      params.push(`%${Route}%`);
-    }
-    if (Icon) {
-      whereClauses.push("Icon LIKE ?");
-      params.push(`%${Icon}%`);
-    }
-    if (OrderIndex !== undefined) {
-      whereClauses.push("OrderIndex = ?");
-      params.push(Number(OrderIndex));
+    const fields = {
+      MenuID: "MenuID LIKE ?",
+      MenuName: "MenuName LIKE ?",
+      ZhName: "ZhName LIKE ?",
+      ParentID: "ParentID LIKE ?",
+      Route: "Route LIKE ?",
+      Icon: "Icon LIKE ?",
+      OrderIndex: "OrderIndex = ?"
+    };
+    // 遍历参数并构造动态 SQL
+    for (let key in fields) {
+      if (key === "OrderIndex") {
+        if (OrderIndex !== undefined) {
+          whereClauses.push(fields[key]);
+          params.push(Number(OrderIndex));
+        }
+      } else {
+        if (eval(key)) {
+          whereClauses.push(fields[key]);
+          params.push(`%${eval(key)}%`);
+        }
+      }
     }
     let whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
     // 获取总记录数
-    const totalsql = `
-      SELECT COUNT(*) AS total
-      FROM Menus
-      ${whereSql}
-    `;
+    const totalsql = `SELECT COUNT(*) AS total FROM Menus ${whereSql}`;
     const total = await new Promise((resolve, reject) => {
       db.get(totalsql,params, (err, row) => {
         if (err) {
@@ -171,15 +154,8 @@ exports.menuListGet = async (req, res) => {
     })
 
     // 查询分页数据
-    const pagination = `
-      SELECT *
-      FROM Menus
-      ${whereSql}
-      LIMIT ?
-      OFFSET ?
-    `;
-    params.push(pageSize);
-    params.push(offSize);
+    const pagination = `SELECT * FROM Menus ${whereSql} LIMIT ? OFFSET ?`;
+    params.push(pageSize,offSize);
     const rowsResult = await new Promise((resolve, reject) => {
       db.all(pagination,params, (err, rows) => {
         if (err) {
@@ -196,15 +172,18 @@ exports.menuListGet = async (req, res) => {
       current,
       pageSize,
       total,
-      message:"成功"
+      message:"请求成功"
     });
-
   }catch (err) { 
-    console.log(`${time}'：${user} 请求菜单列表：/api/menu/list Error`, err);
-    logger.error(`${time}'：${user} 请求菜单列表：/api/menu/list Error`, err);
-  }finally{
-    myPool.release(db);
+    const errMessage = `${time}: ${user} 请求菜单列表 ${err}`;
+    console.log(errMessage);
+    logger.error(errMessage);
+    res.send({
+      code:500,
+      message:"服务器错误，请联系管理员"
+    });
   }
+  myPool.release(db);
 };
 
 //菜单树
@@ -239,9 +218,15 @@ exports.menuTreeGet = async (req, res) => {
 };
 
 //添加菜单
-exports.addMenuPost = async (req, res) => { 
+exports.addMenuPost = async (req, res) => {
+  // 插入日志
   const user = req.user.name;
   const time = new Date().toLocaleString();
+  const logMessage = `${time}: ${user} 添加菜单：/api/menu/create`;
+  console.log(logMessage);
+  logger.info(logMessage);
+  const db = await myPool.acquire();
+  console.log(myPool.status())
   try{ 
     let { MenuName, ZhName, ParentID, Route, Icon, OrderIndex } = req.body;
     if(!MenuName){
@@ -254,36 +239,29 @@ exports.addMenuPost = async (req, res) => {
     ParentID = ParentID || null;
     Icon = Icon || '';
     OrderIndex = OrderIndex || 0;
-    //插入日志
-    console.log(`${time}'：${user} 请求添加菜单：/api/menu/create `);
-    logger.info(`${time}'：${user} 请求添加菜单：/api/menu/create `);
 
-    const db = await myPool.acquire();
-    try{
-      //判断否路由重复
-      const rowsResult = await SelectRoute(db,Route)
-      if(rowsResult.length > 0){
-        res.send({code:400,message:'菜单已存在'});
-        return;
-      }
-
-      const sql = `insert into Menus ( MenuName, ZhName, ParentID, Route, Icon, OrderIndex) values (?, ?, ?, ?, ?, ?)`;
-      db.run(sql,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex],(err)=>{
-        if (err) {
-          console.log(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
-          logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
-          res.send({code:500,message:'菜单创建失败'}); 
-        } else {
-          res.send({ code:200,message: '菜单创建成功' });
-        }
-      });
-    }finally{
-      myPool.release(db);
+    //判断否路由重复
+    const rowsResult = await SelectRoute(db,Route)
+    if(rowsResult.length > 0){
+      res.send({code:400,message:'菜单已存在'});
+      return;
     }
+
+    const sql = `insert into Menus ( MenuName, ZhName, ParentID, Route, Icon, OrderIndex) values (?, ?, ?, ?, ?, ?)`;
+    db.run(sql,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex],(err)=>{
+      if (err) {
+        console.log(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
+        logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
+        res.send({code:500,message:'菜单创建失败'}); 
+      } else {
+        res.send({ code:200,message: '菜单创建成功' });
+      }
+    });
   }catch (err) { 
-    console.log(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
-    logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
+    console.log(`${time}'：${user} 请求添加菜单：/api/menu/create`, err);
+    logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create`, err);
   }
+  myPool.release(db);
 };
 
 //删除菜单
