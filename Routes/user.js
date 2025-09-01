@@ -139,4 +139,8 @@ router.post('/api/user/delete',authenticateToken,(req,res)=>{
   User.userDelete(req,res)
 })
 
+router.post('/api/user/updata',authenticateToken,(req,res)=>{
+  User.userUpdata(req,res)
+})
+
 module.exports = router;

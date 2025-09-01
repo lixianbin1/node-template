@@ -9,14 +9,16 @@ const logger = log4js.getLogger('user');
 
 //菜单权限
 exports.dynamicMenu = async (req, res) => {
-  const user = req.user.name;
+  // 插入日志
   const time = new Date().toLocaleString();
-  console.log(`${time}'：${user} 请求动态菜单：/api/dynamic/menu `);
-  logger.info(`${time}'：${user} 请求菜单列表：/api/dynamic/menu `);
+  const logMessage = `${time}: 动态菜单：/api/dynamic/menu`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
+  console.log(myPool.status())
   try {
     let UserID = req.user.id;
-
+    //检查用户角色权限
     const roleIDs = await new Promise((resolve, reject) => {
       db.all(`SELECT RoleID FROM UserRoles WHERE UserID = ?`, [UserID], (err, rows) => {
         if (err) {
@@ -27,29 +29,18 @@ exports.dynamicMenu = async (req, res) => {
         }
       });
     });
-    console.log(roleIDs)
     if (roleIDs.length === 0) {
-      res.send({ code: 403, message: '无权限查询菜单数据' });
-      return;
+      return res.send({ code: 403, message: '无权限查询菜单数据' });
     }
-    if (roleIDs.includes('admin')){
-
-      // 管理员权限
+    const map = {}; 
+    let menusData = [];
+    if (roleIDs.includes('admin')){ // 管理员权限
       menusData = await new Promise((resolve, reject) => {
         db.all(`SELECT * FROM Menus`, (err, rows) => {
           if (err) {
             reject(err);
           } else {
-            const data = rows.map(menu => ({
-              id: menu.MenuID,
-              name: menu.MenuName,
-              zhName: menu.ZhName,
-              parentID: menu.ParentID,
-              route: menu.Route,
-              icon: menu.Icon,
-              index: menu.OrderIndex
-            }));
-            resolve(data);
+            resolve(rows);
           }
         });
       });
@@ -57,7 +48,7 @@ exports.dynamicMenu = async (req, res) => {
       // 非管理员权限
       // 获取角色的菜单权限
       const menusIDs = await new Promise((resolve, reject) => {
-        db.all(`SELECT PermissionID FROM RolePermissions WHERE RoleID IN (${roleIDs.map(() => '?').join(', ')})`, roleIDs, (err, rows) => {
+        db.all(`SELECT RoleID FROM RolePermissions WHERE RoleID IN (${roleIDs.map(() => '?').join(', ')})`, roleIDs, (err, rows) => {
           if (err) {
             reject(err);
           } else {
@@ -71,37 +62,57 @@ exports.dynamicMenu = async (req, res) => {
           if (err) {
             reject(err);
           } else {
-            const data = rows.map(menu => ({
-              id: menu.MenuID,
-              name: menu.MenuName,
-              zhName: menu.ZhName,
-              parentID: menu.ParentID,
-              route: menu.Route,
-              icon: menu.Icon,
-              index: menu.OrderIndex
-            }));
-            resolve(data);
+            resolve(rows);
           }
         })
       })
     }
-    res.send({ code: 200, data: menusData });
-  } finally {
-    try {
-      myPool.release(db); // 释放连接
-    } catch (releaseErr) {
-      logger.error('dynamicMenu Error:', releaseErr);
-      console.error('dynamicMenu Error:', releaseErr);
-    }
+
+    //处理数据
+    menusData.forEach(item => {
+      map[item.MenuID] = { 
+        ...item, 
+        index: item.Route,
+        title: item.ZhName,
+        icon: item.Icon,
+        children: [] 
+      };
+    });
+    const tree = [];
+    const builtMap = {};
+
+    menusData.forEach(item => {
+      // 如果已经构建过这个节点，直接使用已构建的节点
+      if (!builtMap[item.MenuID]) {
+        builtMap[item.MenuID] = { ...map[item.MenuID] };
+      }
+      const node = builtMap[item.MenuID];
+      if (!item.ParentID) {
+        // 如果是根节点，直接加入树
+        tree.push(node);
+      } else {
+        // 如果不是根节点，找到其父节点并加入父节点的children中
+        if (!builtMap[item.ParentID]) {
+          builtMap[item.ParentID] = { ...map[item.ParentID], children: [] };
+        }
+        const parent = builtMap[item.ParentID];
+        parent.children.push(node);
+      }
+    });
+    res.send({ code: 200, data: tree });
+  }catch (err) {
+    console.log(err);
+    logger.error(err);
+    res.send({code:500,message:"服务器错误，请联系管理员"});
   }
+  myPool.release(db);
 };
 
 //菜单列表
 exports.menuListGet = async (req, res) => {
   // 插入日志
-  const user = req.user.name;
   const time = new Date().toLocaleString();
-  const logMessage = `${time}: ${user} 菜单列表：/api/menu/list`;
+  const logMessage = `${time}: 菜单列表：/api/menu/list`;
   console.log(logMessage);
   logger.info(logMessage);
   const db = await myPool.acquire();
@@ -175,9 +186,8 @@ exports.menuListGet = async (req, res) => {
       message:"请求成功"
     });
   }catch (err) { 
-    const errMessage = `${time}: ${user} 请求菜单列表 ${err}`;
-    console.log(errMessage);
-    logger.error(errMessage);
+    console.log(err);
+    logger.error(err);
     res.send({
       code:500,
       message:"服务器错误，请联系管理员"
@@ -188,6 +198,11 @@ exports.menuListGet = async (req, res) => {
 
 //菜单树
 exports.menuTreeGet = async (req, res) => {
+  // 插入日志
+  const time = new Date().toLocaleString();
+  const logMessage = `${time}: 菜单下拉：/api/menu/tree`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
   try {
     db.all(`SELECT * FROM Menus`, (err, rows) => { 
@@ -200,7 +215,7 @@ exports.menuTreeGet = async (req, res) => {
       });
       const menuTree = []
       rows.forEach(item => { 
-        if(item.ParentID === null){
+        if(!item.ParentID){
           menuTree.push(map[item.MenuID])
         }else{
           const parent = map[item.ParentID]
@@ -211,144 +226,165 @@ exports.menuTreeGet = async (req, res) => {
       });
       res.send({code:200,data:menuTree});
     }); 
-  } catch (err) { 
-    logger.error('menuTreeGet Error:', err);
-    console.error('menuTreeGet Error:', err);
+  }catch (err) {
+    console.log(err);
+    logger.error(err);
+    res.send({code:500,message:"服务器错误，请联系管理员"});
   }
+  myPool.release(db);
 };
 
 //添加菜单
 exports.addMenuPost = async (req, res) => {
   // 插入日志
-  const user = req.user.name;
   const time = new Date().toLocaleString();
-  const logMessage = `${time}: ${user} 添加菜单：/api/menu/create`;
+  const logMessage = `${time}: 添加菜单：/api/menu/create`;
   console.log(logMessage);
   logger.info(logMessage);
   const db = await myPool.acquire();
   console.log(myPool.status())
-  try{ 
+  try{
+    //解析参数
     let { MenuName, ZhName, ParentID, Route, Icon, OrderIndex } = req.body;
     if(!MenuName){
-      res.send({code:400,message:'MenuName 不能为空'}); 
+      return res.send({code:400,message:'MenuName 不能为空'}); 
     }
     if(!Route){
-      res.send({code:400,message:'Route 不能为空'}); 
+      return res.send({code:400,message:'Route 不能为空'}); 
     }
-    ZhName = ZhName || '';
-    ParentID = ParentID || null;
-    Icon = Icon || '';
-    OrderIndex = OrderIndex || 0;
 
     //判断否路由重复
     const rowsResult = await SelectRoute(db,Route)
     if(rowsResult.length > 0){
-      res.send({code:400,message:'菜单已存在'});
-      return;
+      return res.send({code:400,message:'菜单已存在'});
     }
 
-    const sql = `insert into Menus ( MenuName, ZhName, ParentID, Route, Icon, OrderIndex) values (?, ?, ?, ?, ?, ?)`;
-    db.run(sql,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex],(err)=>{
-      if (err) {
-        console.log(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
-        logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create Error`, err);
-        res.send({code:500,message:'菜单创建失败'}); 
-      } else {
-        res.send({ code:200,message: '菜单创建成功' });
-      }
+    // 查询分页数据
+    const Insert = `insert into Menus ( MenuName, ZhName, ParentID, Route, Icon, OrderIndex) values (?, ?, ?, ?, ?, ?)`;
+    const InsertRow = await new Promise((resolve, reject) => {
+      db.all(Insert,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
     });
+    res.send({ code:200,message: '菜单创建成功' });
   }catch (err) { 
-    console.log(`${time}'：${user} 请求添加菜单：/api/menu/create`, err);
-    logger.error(`${time}'：${user} 请求添加菜单：/api/menu/create`, err);
+    console.log(err);
+    logger.error(err);
+    res.send({
+      code:500,
+      message:"服务器错误，请联系管理员"
+    });
   }
   myPool.release(db);
 };
 
 //删除菜单
 exports.deleteMenuPost = async (req, res) => { 
-  const user = req.user.name;
+  // 插入日志
   const time = new Date().toLocaleString();
+  const logMessage = `${time}: 添加菜单：/api/menu/create`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
+  console.log(myPool.status())
   try{
     let { MenuID } = req.body;
     if(!MenuID){
       res.send({code:400,message:'MenuID 不能为空'}); 
     }
-    //插入日志
-    console.log(`${time}'：${user} 删除菜单：/api/menu/delete `);
-    logger.info(`${time}'：${user} 删除菜单：/api/menu/delete `);
-    
-    //存在菜单存在子集。则修改为null
+    const rowsResult = await SelectMenuID(db,MenuID)
+    if(rowsResult.length === 0){
+      return res.send({code:400,message:'菜单不存在'});
+    }
+    const rowsPrent = new Promise((resolve, reject) => { 
+      db.all(`SELECT * FROM Menus WHERE ParentID = ?`,[MenuID], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+    if(rowsPrent.length > 0){
+      return res.send({code:400,message:'请先删除子菜单'});
+    }
 
-    db.run(`delete from Menus where MenuID = ?`,[MenuID],(err)=>{ 
-      if (err) {
-        console.log(`${time}'：${user} 删除菜单 Error`, err);
-        logger.error(`${time}'：${user} 删除菜单 Error`, err);
-        res.send({code:500,message:'菜单删除失败'}); 
-      } else {
-        res.send({ code:200,message: '菜单删除成功' });
-      }
+    const doDelete = new Promise((resolve, reject) => { 
+      db.all(`delete from Menus where MenuID = ?`,[MenuID], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
     });
 
+    res.send({ code:200,message: '菜单删除成功' });
+
   }catch (err) { 
-    console.log(`${time}'：${user} 删除菜单：/api/menu/delete Error`, err);
-    logger.error(`${time}'：${user} 删除菜单：/api/menu/delete Error`, err);
+    console.log(err);
+    logger.error(err);
+    res.send({code:500,message:"服务器错误，请联系管理员"});
   }
+  myPool.release(db);
 };
 
 //修改菜单
 exports.updateMenuPost = async (req, res) => { 
-  const user = req.user.name;
+  // 插入日志
   const time = new Date().toLocaleString();
+  const logMessage = `${time}: 添加菜单：/api/menu/create`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
+  console.log(myPool.status())
   try{
     let { MenuID, MenuName, ZhName, ParentID, Route, Icon, OrderIndex } = req.body;
     if(!MenuID){
-      res.send({code:400,message:'MenuID 不能为空'}); 
+      res.send({code:400,message:'菜单ID不能为空'}); 
     }
     if(!MenuName){
-      res.send({code:400,message:'MenuName 不能为空'}); 
+      res.send({code:400,message:'菜单名称不能为空'}); 
     }
     if(!Route){
-      res.send({code:400,message:'Route 不能为空'}); 
+      res.send({code:400,message:'路由不能为空'}); 
     }
-    ZhName = ZhName || '';
-    ParentID = ParentID || null;
-    Icon = Icon || '';
-    OrderIndex = OrderIndex || 0;
-    //插入日志
-    console.log(`${time}'：${user} 修改菜单：/api/menu/update `);
-    logger.info(`${time}'：${user} 修改菜单：/api/menu/update `);
 
     //判断否路由重复
     const rowsResult = await SelectRoute(db,Route)
     if(rowsResult.length > 1 || rowsResult.length === 1 && rowsResult[0].MenuID !== MenuID){
-      res.send({code:400,message:'菜单已存在'});
+      res.send({code:400,message:'该路由已存在'});
       return;
     }
 
+    //更新数据
     const sql = `update Menus set MenuName = ?, ZhName = ?, ParentID = ?, Route = ?, Icon = ?, OrderIndex = ? where MenuID = ?`;
-    db.run(sql,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex, MenuID],(err)=>{ 
-      if (err) {
-        console.log(`${time}'：${user} 修改菜单 Error`, err);
-        logger.error(`${time}'：${user} 修改菜单 Error`, err);
-        res.send({code:500,message:'菜单修改失败'}); 
-      } else {
-        res.send({ code:200,message: '菜单修改成功' });
-      }
-    })
+    const updateMenu = new Promise((resolve, reject) => { 
+      db.run(sql,[ MenuName, ZhName, ParentID, Route, Icon, OrderIndex, MenuID], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+    res.send({ code:200,message: '菜单修改成功' });
   }catch (err) { 
-    console.log(`${time}'：${user} 修改菜单：/api/menu/update Error`, err);
-    logger.error(`${time}'：${user} 修改菜单：/api/menu/update Error`, err);
-  }finally{ 
-    myPool.release(db);
+    console.log(err);
+    logger.error(err);
+    res.send({code:500,message:"服务器错误，请联系管理员"});
   }
+  myPool.release(db);
 };
 
 //判断否路由重复
 const SelectRoute = async (db,Route) => { 
   const querySql = `SELECT * FROM Menus WHERE Route = ?`;
-  const rowsResult = await new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     db.all(querySql,[Route], (err, rows) => {
       if (err) {
         reject(err);
@@ -357,5 +393,18 @@ const SelectRoute = async (db,Route) => {
       }
     });
   });
-  return rowsResult
+}
+
+//判断否MenuID重复
+const SelectMenuID = async (db,MenuID) => { 
+  const querySql = `SELECT * FROM Menus WHERE MenuID = ?`;
+  return await new Promise((resolve, reject) => {
+    db.all(querySql,[MenuID], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
 }

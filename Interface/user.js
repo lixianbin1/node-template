@@ -175,10 +175,10 @@ exports.userInfoGet= async(req,res)=>{
 
 //用户列表
 exports.userListGet = async(req,res)=>{
-  const user = req.user.name;
   const time = new Date().toLocaleString();
-  console.log(`${time}'：${user} 用户列表：/api/user/list`);
-  logger.info(`${time}'：${user} 用户列表：/api/user/list `);
+  const logMessage = `${time}: 用户列表：/api/user/list`;
+  console.log(logMessage);
+  logger.info(logMessage);
   const db = await myPool.acquire();
   try{
     const current = parseInt(req.query.current, 10);
@@ -206,7 +206,11 @@ exports.userListGet = async(req,res)=>{
         (SELECT GROUP_CONCAT(r.RoleName, ', ') 
          FROM UserRoles ur 
          JOIN Roles r ON ur.RoleID = r.RoleID 
-         WHERE ur.UserID = u.UserID) AS Roles
+         WHERE ur.UserID = u.UserID) AS Roles,
+        (SELECT GROUP_CONCAT(r.RoleID, ', ') 
+         FROM UserRoles ur 
+         JOIN Roles r ON ur.RoleID = r.RoleID 
+         WHERE ur.UserID = u.UserID) AS RoleIDs
       FROM 
         Users u
       LIMIT ? OFFSET ?;
@@ -216,7 +220,14 @@ exports.userListGet = async(req,res)=>{
         if (err) {
           reject(err);
         } else {
-          resolve(rows);
+          const data = rows.map(row => ({
+            UserID: row.UserID,
+            UserName: row.UserName,
+            Email: row.Email,
+            RoleID: row.RoleIDs ? row.RoleIDs.split(', ') : [],
+            Roles: row.Roles
+          }));
+          resolve(data);
         }
       })
     })
@@ -256,21 +267,59 @@ exports.userDelete = async(req, res)=>{
 
 //更新用户
 exports.userUpdata = async(req, res)=>{
+  // 插入日志
+  const time = new Date().toLocaleString();
+  const logMessage = `${time}: 更新用户：/api/user/updata`;
+  console.log(logMessage);
+  logger.info(logMessage);
+  const db = await myPool.acquire();
+  console.log(myPool.status())
   try{
     let { UserID,UserName,Email,Status,RoleID } = req.body;
-    const sql = 'update Users set UserName=?,Email=?,Status=? where UserID=?'
     const params = [UserName,Email, role, Status, UserID]
-    db.run(sql, params, (err, result) => {
-      if (err) {
-        res.send({ code: 500, message: '请求失败，请联系管理员' });
-      }
-      db.run('delete from UserRoles where UserID=?',[UserID])
-      RoleID.forEach(async (item) => {
-        await db.run('insert into UserRoles(UserID,RoleID) values(?,?)',[UserID,item])
+    if(!UserID){
+      return res.send({code:500,message:"用户ID不能为空"});
+    }
+
+    //更新用户表
+    const sql = 'update Users set UserName=?,Email=?,Status=? where UserID=?'
+    const runRes = new Promise((resolve, reject) => {
+      db.run(sql, params, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
       })
-      res.send({ code: 200, message: '更新成功' });
     })
+    //删除用户角色表
+    const delRes = new Promise((resolve, reject) => {
+      db.run('delete from UserRoles where UserID=?',[UserID],(err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      })
+    })
+    //添加用户角色表
+    const addsql = 'insert into UserRoles(UserID,RoleID) values(?,?)'
+    const addRes = new Promise((resolve, reject) => {
+      RoleID.forEach(async (item) => {
+        await db.run(addsql,[UserID,item])
+      })
+    })
+
+    Promise.all([runRes, delRes, addRes]).then(() => {
+      res.send({ code: 200, message: '更新成功' });
+    }).catch((err) => {
+      res.send({ code: 500, message: '更新失败' });
+    });
+
   }catch(err) { 
-    res.send({ code: 500, message: '请求失败，请联系管理员' });
+    console.log(err);
+    logger.error(err);
+    res.send({code:500,message:"服务器错误，请联系管理员"});
   }
+  myPool.release(db);
 }
